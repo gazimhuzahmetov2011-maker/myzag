@@ -1,0 +1,128 @@
+<div class="player">
+ <div class="now">
+  <div class="mini-cover">♫</div>
+  <div class="now-info">
+   <strong id="current">Выбери трек</strong>
+   <small id="artist">MYZAG PLAYER</small>
+  </div>
+ </div>
+ <button class="play" onclick="playTrack()">▶</button>
+ <div class="player-note" id="note">Музыкальный каталог скоро появится</div>
+</div>
+
+<script>
+const songs=[
+ {id:1,title:"Midnight",artist:"MYZAG Radio",emoji:"🌙"},
+ {id:2,title:"Dreams",artist:"MYZAG Radio",emoji:"✨"},
+ {id:3,title:"After Dark",artist:"MYZAG Radio",emoji:"🌌"},
+ {id:4,title:"Purple Sky",artist:"MYZAG Radio",emoji:"💜"},
+ {id:5,title:"Lost in Sound",artist:"MYZAG Radio",emoji:"🎧"},
+ {id:6,title:"New World",artist:"MYZAG Radio",emoji:"🌆"}
+];
+
+let favorites=JSON.parse(localStorage.getItem("myz_fav")||"[]");
+let playlists=JSON.parse(localStorage.getItem("myz_lists")||"[]");
+let page="home";
+let selected=null;
+
+const tracks=document.getElementById("tracks");
+const search=document.getElementById("search");
+
+function render(){
+ let q=search.value.toLowerCase();
+ let list=songs.filter(s=>
+  (s.title+" "+s.artist).toLowerCase().includes(q)
+ );
+ if(page==="favorites")list=list.filter(s=>favorites.includes(s.id));
+ if(page==="playlists")list=[];
+ document.getElementById("heading").textContent=
+  page==="favorites"?"Твоё избранное":
+  page==="playlists"?"Твои плейлисты":"Популярное";
+ tracks.innerHTML=list.map(s=>
+ <div class="card">
+  <div class="cover">${s.emoji}</div>
+  <h3>${s.title}</h3>
+  <p>${s.artist}</p>
+  <div class="actions">
+   <button onclick="selectTrack(${s.id})">▶</button>
+   <button class="like" onclick="favorite(${s.id})">
+    ${favorites.includes(s.id)?"♥":"♡"}
+   </button>
+  </div>
+ </div>).join("");
+ document.getElementById("empty").hidden=list.length>0;
+ if(page==="playlists")showPlaylists();
+}
+
+function selectTrack(id){
+ selected=songs.find(s=>s.id===id);
+ document.getElementById("current").textContent=selected.title;
+ document.getElementById("artist").textContent=selected.artist;
+ document.getElementById("note").textContent=
+ "Это демо-каталог. Подключение музыки впереди.";
+}
+
+function playTrack(){
+ if(!selected){
+  alert("Сначала выбери трек!");
+  return;
+ }
+ alert("Музыкальный каталог подключим на следующем этапе MYZAG.");
+}
+
+function favorite(id){
+ favorites=favorites.includes(id)?
+ favorites.filter(x=>x!==id):[...favorites,id];
+ localStorage.setItem("myz_fav",JSON.stringify(favorites));
+ render();
+}
+
+function newPlaylist(){
+ let name=prompt("Название твоего плейлиста:");
+ if(!name||!name.trim())return;
+ playlists.push({name:name.trim()});
+ localStorage.setItem("myz_lists",JSON.stringify(playlists));
+ page="playlists";
+ updateTabs();
+ render();
+}
+
+function showPlaylists(){
+ tracks.innerHTML=playlists.length?
+ playlists.map((p,i)=>
+ <div class="card">
+  <div class="cover">♫</div>
+  <h3>${p.name}</h3>
+  <p>Твой плейлист</p>
+  <div class="actions">
+   <button onclick="deletePlaylist(${i})">Удалить</button>
+  </div>
+ </div>).join("") :
+ '<p class="empty">Пока нет плейлистов. Создай первый!</p>';
+ document.getElementById("empty").hidden=true;
+}
+
+function deletePlaylist(i){
+ playlists.splice(i,1);
+ localStorage.setItem("myz_lists",JSON.stringify(playlists));
+ render();
+}
+
+function updateTabs(){
+ document.querySelectorAll(".tab").forEach(b=>{
+  b.classList.toggle("active",b.dataset.page===page);
+ });
+}
+
+document.querySelectorAll(".tab").forEach(b=>{
+ b.onclick=()=>{
+  page=b.dataset.page;
+  updateTabs();
+  render();
+ };
+});
+search.addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
